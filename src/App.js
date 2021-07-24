@@ -1,23 +1,47 @@
-import logo from './logo.svg';
-import './App.css';
+import "./App.css";
+import Sidebar from "./Sidebar";
+import Chat from "./Chat";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import { useEffect } from "react";
+import Login from "./Login";
+import { useStateValue } from "./StateProvider";
+import db from "./firebase";
 
 function App() {
+  const [{ user }, dispatch] = useStateValue();
+
+  useEffect(() => {
+    async function validateUser() {
+      const userRef = db.collection("Users").doc(user.email);
+
+      userRef.get()
+      .then(docSnapshot => {
+        if(!docSnapshot.exists){
+          userRef.set({});
+        }
+      });
+    }
+
+    if(user)
+      validateUser();
+  }, [user]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+    <div className="app">
+      {!user ? (
+        <Login />
+      ) : (
+        <div className="app_body">
+          <Router>
+            <Sidebar />
+            <Switch>
+              <Route path="/chat/:chatId">
+                <Chat />
+              </Route>
+            </Switch>
+          </Router>
+        </div>
+      )}
     </div>
   );
 }
